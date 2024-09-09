@@ -12,9 +12,6 @@ class GroupToDo extends StatelessWidget {
     /// 没懂为啥是 MaterialApp
     return MaterialApp(
       title: 'Flutter Login Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
 
       /// 设置主界面
       home: LoginScreen(),
@@ -62,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
               TextField(
                 controller: _usernameController,
                 decoration: InputDecoration(
-                  labelText: 'Username',
+                  hintText: 'Username',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -71,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _passwordController,
                 obscureText: _obscureText,
                 decoration: InputDecoration(
-                  labelText: 'Password',
+                  hintText: 'Password',
                   border: OutlineInputBorder(),
                   suffixIcon: IconButton(
                     icon: Icon(

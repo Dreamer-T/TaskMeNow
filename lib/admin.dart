@@ -49,7 +49,7 @@ class _AdminScreenState extends State<AdminScreen> {
   Widget _buildMemberPage() {
     return Scaffold(
       body: Container(
-        color: Colors.blue[50],
+        color: Colors.deepPurple[50],
         child: ListView.builder(
           itemCount: _members.length,
           itemBuilder: (context, index) {
@@ -57,7 +57,7 @@ class _AdminScreenState extends State<AdminScreen> {
             return ListTile(
               leading: Icon(Icons.person),
               title: Text('${member.name} (ID: ${member.id})'),
-              subtitle: Text('Role: ${member.role}'),
+              subtitle: Text('Group: ${member.role}'),
             );
           },
         ),
@@ -67,7 +67,6 @@ class _AdminScreenState extends State<AdminScreen> {
           _showAddMemberDialog();
         },
         child: Icon(Icons.add),
-        backgroundColor: Colors.deepPurple,
       ),
     );
   }
@@ -143,14 +142,12 @@ class _AdminScreenState extends State<AdminScreen> {
         titleTextStyle: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 22,
-          color: Colors.white,
         ),
       ),
       body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _onItemTapped,
-        selectedItemColor: Colors.deepPurple,
         unselectedItemColor: Colors.grey,
         selectedLabelStyle: TextStyle(fontWeight: FontWeight.bold),
         items: const <BottomNavigationBarItem>[
