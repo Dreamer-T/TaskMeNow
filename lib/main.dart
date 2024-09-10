@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'admin.dart';
+import 'stuff.dart';
+import 'task.dart';
 
 void main() {
   runApp(GroupToDo());
@@ -18,6 +20,8 @@ class GroupToDo extends StatelessWidget {
       routes: {
         '/home': (BuildContext context) => LoginScreen(),
         '/home/admin': (BuildContext context) => AdminScreen(),
+        '/home/stuff': (BuildContext context) => StuffScreen(),
+        '/home/stuff/task': (BuildContext context) => TaskScreen(),
       },
     );
   }
@@ -41,7 +45,22 @@ class _LoginScreenState extends State<LoginScreen> {
     // Perform login logic here
     print('Username: $username');
     print('Password: $password');
-    Navigator.pushNamed(context, "/home/admin");
+    if (username == "Admin") {
+      Navigator.pushNamed(context, "/home/admin");
+    } else if (username == "Stuff") {
+      Navigator.pushNamed(context, "/home/stuff");
+    } else {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Not a member'),
+              content: Text('The entered username is not recognized.'),
+            );
+          });
+      _usernameController.text = "";
+      _passwordController.text = "";
+    }
   }
 
   @override
