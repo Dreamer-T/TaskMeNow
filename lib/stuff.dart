@@ -31,12 +31,8 @@ class _StuffScreenState extends State<StuffScreen> {
   // Page list with styles
   List<Widget> get _pages {
     return [
-      _buildTaskPage(), // 成员页面
-      _buildNewTaskPage(),
-      Center(
-          child: Text('Completed Task Page',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
-      _buildArchivePage(),
+      _buildTaskPage(), // Task 页面
+      _buildArchivePage(), // Archive 页面
     ];
   }
 
@@ -60,13 +56,6 @@ class _StuffScreenState extends State<StuffScreen> {
     );
   }
 
-  Widget _buildNewTaskPage() {
-    return Scaffold(
-        appBar: AppBar(
-      title: Center(child: Text('Login')),
-    ));
-  }
-
   /// 已经完成的任务界面
   Widget _buildArchivePage() {
     return Center(
@@ -79,6 +68,16 @@ class _StuffScreenState extends State<StuffScreen> {
     setState(() {
       _currentIndex = index;
     });
+  }
+
+  /// 构建新的任务页面
+  Widget _buildNewTaskPage() {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('New Task'),
+      ),
+      body: Column(),
+    );
   }
 
   @override
@@ -94,25 +93,38 @@ class _StuffScreenState extends State<StuffScreen> {
         ),
       ),
       body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onItemTapped,
-        unselectedItemColor: Colors.grey,
-        selectedLabelStyle: TextStyle(fontWeight: FontWeight.bold),
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.task),
-            label: 'Task',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: 'Ongoing Task',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.archive),
-            label: 'Archive',
-          ),
-        ],
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // 导航到新的任务页面
+          Navigator.pushNamed(
+            context,
+            '/home/stuff/task',
+          );
+        },
+        backgroundColor: Colors.deepPurple,
+        child: Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        shape: CircularNotchedRectangle(), // 留出FAB的凹槽
+        notchMargin: 8.0,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: <Widget>[
+            IconButton(
+              icon: Icon(Icons.task),
+              onPressed: () {
+                _onItemTapped(0); // 切换到Task页面
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.archive),
+              onPressed: () {
+                _onItemTapped(1); // 切换到Archive页面
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
