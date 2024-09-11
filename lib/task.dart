@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:grouptodo/stuff.dart';
+import 'package:grouptodo/staff.dart';
 import 'package:image_picker/image_picker.dart';
 
 class TaskScreen extends StatefulWidget {
@@ -73,13 +73,14 @@ class _TaskScreenState extends State<TaskScreen> {
       authorityGroup.add(AuthorityGroup.painter);
     }
     if (_checkboxValues[3]) {
-      authorityGroup.add(AuthorityGroup.plummer);
+      authorityGroup.add(AuthorityGroup.plumber);
     }
 
     return Task(
         id: ID++,
         description: _taskDescription,
-        groupAuthority: authorityGroup);
+        groupAuthority: authorityGroup,
+        time: DateTime.now());
   }
 
   @override
@@ -164,15 +165,50 @@ class _TaskScreenState extends State<TaskScreen> {
 
   // 选择图片的方法
   Future<void> _selectImage() async {
-    final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery, // 或者使用 ImageSource.camera
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.photo_library),
+                title: Text('Select from album'),
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  final XFile? pickedFile = await _picker.pickImage(
+                    source: ImageSource.gallery,
+                  );
+                  if (pickedFile != null) {
+                    setState(() {
+                      _selectedImage = Image.file(File(pickedFile.path));
+                      _isModified = true; // 图片被修改
+                    });
+                  }
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.camera_alt),
+                title: Text('Take a photo now'),
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  final XFile? pickedFile = await _picker.pickImage(
+                    source: ImageSource.camera,
+                  );
+                  if (pickedFile != null) {
+                    setState(() {
+                      _selectedImage = Image.file(File(pickedFile.path));
+                      _isModified = true; // 图片被修改
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = Image.file(File(pickedFile.path));
-        _isModified = true; // 图片被修改
-      });
-    }
   }
 
   // 用户点击返回或放弃时的提示

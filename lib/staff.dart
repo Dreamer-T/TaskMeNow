@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:grouptodo/task.dart';
 
-enum AuthorityGroup { cleaning, manager, painter, plummer }
+enum AuthorityGroup { cleaning, manager, painter, plumber }
 
 int ID = 1;
 
@@ -11,13 +11,15 @@ class Task {
   final String description;
   final Image? image;
   final List<AuthorityGroup> groupAuthority;
+  final DateTime time;
 
   // 使用默认的图片
   Task({
     required this.id,
     required this.description,
     required this.groupAuthority,
-    this.image, // 这里提供一个默认图片
+    required this.time,
+    this.image,
   });
   String toString() {
     return "id: " + id.toString() + " description: " + description;
@@ -25,12 +27,12 @@ class Task {
 }
 
 /// Admin Screen which allows admin to modify group members
-class StuffScreen extends StatefulWidget {
+class StaffScreen extends StatefulWidget {
   @override
-  State<StatefulWidget> createState() => _StuffScreenState();
+  State<StatefulWidget> createState() => _StaffScreenState();
 }
 
-class _StuffScreenState extends State<StuffScreen> {
+class _StaffScreenState extends State<StaffScreen> {
   // 当前选中的页面索引
   int _currentIndex = 0;
 
@@ -61,7 +63,7 @@ class _StuffScreenState extends State<StuffScreen> {
   }
 
   // Task 页面构建
-  Widget _buildTaskPage() {
+  Widget _buildTaskPage2() {
     return Scaffold(
       body: Container(
         color: Color(0x103237E4),
@@ -104,10 +106,67 @@ class _StuffScreenState extends State<StuffScreen> {
                     title: Text('ID: ${task.id}'),
                     subtitle: Text('Specified: ${task.description}'),
                     onTap: () {
-                      print('${task.description}');
+                      print(task.time);
                     },
                   ),
                   // ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // Task 页面构建
+  Widget _buildTaskPage() {
+    return Scaffold(
+      body: Container(
+        color: Color(0x103237E4),
+        child: ReorderableListView.builder(
+          itemCount: _tasks.length,
+          padding: EdgeInsets.symmetric(vertical: 8.0), // 设置整体的 padding
+          onReorder: (int oldIndex, int newIndex) {
+            setState(() {
+              if (newIndex > oldIndex) {
+                newIndex -= 1;
+              }
+              final Task movedTask = _tasks.removeAt(oldIndex);
+              _tasks.insert(newIndex, movedTask);
+            });
+          },
+
+          // 避免白底
+          proxyDecorator:
+              (Widget child, int index, Animation<double> animation) {
+            return child;
+          },
+          itemBuilder: (context, index) {
+            final task = _tasks[index];
+            return Container(
+              key: ValueKey(task.id), // 为 ReorderableListView 提供唯一 key
+              margin: const EdgeInsets.symmetric(
+                  horizontal: 8, vertical: 4.0), // 设置项目之间的间隔
+              child: Material(
+                color: Colors.transparent,
+                elevation: 4.0, // 设置阴影的高度
+                shadowColor: Colors.deepPurple,
+                child: Ink(
+                  decoration: BoxDecoration(
+                    color: Colors.white, // 设置为统一的背景色
+                  ), // 设置项目之间的间隔,
+
+                  child: InkWell(
+                    child: ListTile(
+                      leading: Icon(Icons.drag_handle),
+                      title: Text('ID: ${task.id}'),
+                      subtitle: Text('Specified: ${task.description}'),
+                      onTap: () {
+                        print(task.time);
+                      },
+                    ),
+                  ),
                 ),
               ),
             );
@@ -135,7 +194,7 @@ class _StuffScreenState extends State<StuffScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Stuff Screen'),
+        title: Text('Staff Screen'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         elevation: 0,

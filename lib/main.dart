@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'admin.dart';
-import 'stuff.dart';
+import 'staff.dart';
 import 'task.dart';
 
 void main() {
@@ -20,8 +20,8 @@ class GroupToDo extends StatelessWidget {
       routes: {
         '/home': (BuildContext context) => LoginScreen(),
         '/home/admin': (BuildContext context) => AdminScreen(),
-        '/home/stuff': (BuildContext context) => StuffScreen(),
-        '/home/stuff/task': (BuildContext context) => TaskScreen(),
+        '/home/staff': (BuildContext context) => StaffScreen(),
+        '/home/staff/task': (BuildContext context) => TaskScreen(),
       },
     );
   }
@@ -47,8 +47,8 @@ class _LoginScreenState extends State<LoginScreen> {
     print('Password: $password');
     if (username == "Admin") {
       Navigator.pushNamed(context, "/home/admin");
-    } else if (username == "Stuff") {
-      Navigator.pushNamed(context, "/home/stuff");
+    } else if (username == "staff") {
+      Navigator.pushNamed(context, "/home/staff");
     } else {
       showDialog(
           context: context,
