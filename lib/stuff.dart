@@ -77,6 +77,12 @@ class _StuffScreenState extends State<StuffScreen> {
               _tasks.insert(newIndex, movedTask);
             });
           },
+
+          // 避免白底
+          proxyDecorator:
+              (Widget child, int index, Animation<double> animation) {
+            return child;
+          },
           itemBuilder: (context, index) {
             final task = _tasks[index];
             return Container(
@@ -86,6 +92,7 @@ class _StuffScreenState extends State<StuffScreen> {
               child: Material(
                 color: Colors.transparent,
                 elevation: 4.0, // 设置阴影的高度
+                shadowColor: Colors.deepPurple,
                 borderRadius: BorderRadius.circular(8.0), // 圆角
                 child: Container(
                   decoration: BoxDecoration(
@@ -100,6 +107,7 @@ class _StuffScreenState extends State<StuffScreen> {
                       print('${task.description}');
                     },
                   ),
+                  // ),
                 ),
               ),
             );
