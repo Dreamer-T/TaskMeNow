@@ -22,7 +22,7 @@ class Task {
     this.image,
   });
   String toString() {
-    return "id: " + id.toString() + " description: " + description;
+    return "id: $id description: $description";
   }
 }
 
@@ -36,6 +36,7 @@ class _StaffScreenState extends State<StaffScreen> {
   // 当前选中的页面索引
   int _currentIndex = 0;
 
+  final Map<int, GlobalKey> _itemKeys = {};
   // 成员列表
   List<Task> _tasks = [];
   late Task _taskResult;
@@ -43,7 +44,7 @@ class _StaffScreenState extends State<StaffScreen> {
     // 等待 TaskScreen 返回的结果
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => TaskScreen()),
+      MaterialPageRoute(builder: (context) => TaskCreateScreen()),
     );
     // 检查是否返回了数据
     if (result != null) {
@@ -57,13 +58,13 @@ class _StaffScreenState extends State<StaffScreen> {
   // Page list with styles
   List<Widget> get _pages {
     return [
-      _buildTaskPage(), // Task 页面
-      _buildArchivePage(), // Archive 页面
+      _buildTaskListPage(), // Task List 页面
+      _buildArchiveListPage(), // Archive List 页面
     ];
   }
 
   // Task 页面构建
-  Widget _buildTaskPage2() {
+  Widget _buildTaskListPage() {
     return Scaffold(
       body: Container(
         color: Color(0x103237E4),
@@ -87,63 +88,9 @@ class _StaffScreenState extends State<StaffScreen> {
           },
           itemBuilder: (context, index) {
             final task = _tasks[index];
-            return Container(
-              key: ValueKey(task.id), // 为 ReorderableListView 提供唯一 key
-              margin: const EdgeInsets.symmetric(
-                  horizontal: 8, vertical: 4.0), // 设置项目之间的间隔
-              child: Material(
-                color: Colors.transparent,
-                elevation: 4.0, // 设置阴影的高度
-                shadowColor: Colors.deepPurple,
-                borderRadius: BorderRadius.circular(8.0), // 圆角
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white, // 设置为统一的背景色
-                    borderRadius: BorderRadius.circular(8.0), // 圆角
-                  ), // 设置项目之间的间隔,
-                  child: ListTile(
-                    leading: Icon(Icons.drag_handle),
-                    title: Text('ID: ${task.id}'),
-                    subtitle: Text('Specified: ${task.description}'),
-                    onTap: () {
-                      print(task.time);
-                    },
-                  ),
-                  // ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  // Task 页面构建
-  Widget _buildTaskPage() {
-    return Scaffold(
-      body: Container(
-        color: Color(0x103237E4),
-        child: ReorderableListView.builder(
-          itemCount: _tasks.length,
-          padding: EdgeInsets.symmetric(vertical: 8.0), // 设置整体的 padding
-          onReorder: (int oldIndex, int newIndex) {
-            setState(() {
-              if (newIndex > oldIndex) {
-                newIndex -= 1;
-              }
-              final Task movedTask = _tasks.removeAt(oldIndex);
-              _tasks.insert(newIndex, movedTask);
-            });
-          },
-
-          // 避免白底
-          proxyDecorator:
-              (Widget child, int index, Animation<double> animation) {
-            return child;
-          },
-          itemBuilder: (context, index) {
-            final task = _tasks[index];
+            // 为每个任务创建一个 GlobalKey
+            _itemKeys[task.id] = GlobalKey();
+            print(_itemKeys[task.id]);
             return Container(
               key: ValueKey(task.id), // 为 ReorderableListView 提供唯一 key
               margin: const EdgeInsets.symmetric(
@@ -164,6 +111,9 @@ class _StaffScreenState extends State<StaffScreen> {
                       subtitle: Text('Specified: ${task.description}'),
                       onTap: () {
                         print(task.time);
+                        // _getPosition(task.id); // 获取相对位置
+                        Navigator.push(
+                            context, _createScaleTransitionPageRoute(task));
                       },
                     ),
                   ),
@@ -176,8 +126,36 @@ class _StaffScreenState extends State<StaffScreen> {
     );
   }
 
+  // void _getPosition(int taskId) {
+  //   // 获取指定任务的 GlobalKey 并计算它的位置信息
+  //   final key = _itemKeys[taskId];
+  //   final renderBox = key?.currentContext?.findRenderObject() as RenderBox?;
+  //   print(renderBox);
+  //   if (renderBox != null) {
+  //     // 获取相对于屏幕的全局位置
+  //     final position = renderBox.localToGlobal(Offset.zero);
+  //     print('Position of task $taskId: $position');
+  //   }
+  // }
+
+  PageRouteBuilder _createScaleTransitionPageRoute(Task task) {
+    return PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) {
+      return TaskCheckScreen(task: task);
+    }, transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      const begin = Offset(1.0, 0.0); // Starting point (slide from right)
+      const end = Offset.zero; // Ending point (slide to the current position)
+      const curve = Curves.easeInOut; // Curve for the animation
+
+      var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+      var offsetAnimation = animation.drive(tween);
+
+      return SlideTransition(position: offsetAnimation, child: child);
+    });
+  }
+
   /// 已经完成的任务界面
-  Widget _buildArchivePage() {
+  Widget _buildArchiveListPage() {
     return Center(
         child: Text('Completed Task Page',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)));
@@ -221,7 +199,8 @@ class _StaffScreenState extends State<StaffScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             IconButton(
-              icon: Icon(Icons.task),
+              icon: Icon(Icons.task,
+                  color: _currentIndex == 0 ? Colors.deepPurple : null),
               tooltip: "Ongoing Task",
               onPressed: () {
                 _onItemTapped(0); // 切换到Task页面
@@ -229,7 +208,8 @@ class _StaffScreenState extends State<StaffScreen> {
             ),
             // Spacer(),
             IconButton(
-              icon: Icon(Icons.archive),
+              icon: Icon(Icons.archive,
+                  color: _currentIndex == 1 ? Colors.deepPurple : null),
               tooltip: "Completed Task",
               onPressed: () {
                 _onItemTapped(1); // 切换到Archive页面

@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:grouptodo/staff.dart';
 import 'package:image_picker/image_picker.dart';
 
-class TaskScreen extends StatefulWidget {
+/// 任务创建界面
+class TaskCreateScreen extends StatefulWidget {
   @override
-  State<StatefulWidget> createState() => _TaskScreenState();
+  State<StatefulWidget> createState() => _TaskCreateScreenState();
 }
 
-class _TaskScreenState extends State<TaskScreen> {
+class _TaskCreateScreenState extends State<TaskCreateScreen> {
   bool _isModified = false; // 用于检测是否有修改
   String _taskDescription = '';
   Image? _selectedImage;
@@ -242,5 +243,52 @@ class _TaskScreenState extends State<TaskScreen> {
     } else {
       Navigator.of(context).pop(); // 没有修改时直接返回
     }
+  }
+}
+
+/// 任务查看界面
+class TaskCheckScreen extends StatefulWidget {
+  final Task task;
+  TaskCheckScreen({required this.task});
+  @override
+  State<StatefulWidget> createState() => _TaskCheckScreenState();
+}
+
+class _TaskCheckScreenState extends State<TaskCheckScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final task = widget.task; // 假设 task 是 Task 类型
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        titleTextStyle: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 22,
+        ),
+        title: Text("#${task.id}"),
+        centerTitle: true,
+      ),
+      body: Column(children: [
+        Container(
+          alignment: Alignment.topLeft,
+          margin: EdgeInsets.all(15),
+          child: Text(
+            task.description,
+            style: TextStyle(fontSize: 20),
+          ),
+        ),
+        Container(
+          alignment: Alignment.topLeft,
+          margin: EdgeInsets.all(15),
+          child: Text(
+            task.time.toString(),
+            style: TextStyle(fontSize: 20),
+          ),
+        ),
+      ]),
+    );
   }
 }

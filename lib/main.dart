@@ -11,17 +11,18 @@ void main() {
 class GroupToDo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    /// 没懂为啥是 MaterialApp
     return MaterialApp(
       title: 'Flutter Login Demo',
 
       /// 设置主界面
-      home: LoginScreen(),
+      initialRoute: '/home',
       routes: {
         '/home': (BuildContext context) => LoginScreen(),
         '/home/admin': (BuildContext context) => AdminScreen(),
         '/home/staff': (BuildContext context) => StaffScreen(),
-        '/home/staff/task': (BuildContext context) => TaskScreen(),
+        '/home/staff/taskCreate': (BuildContext context) => TaskCreateScreen(),
+        '/home/staff/taskCheck': (BuildContext context) => TaskCheckScreen(
+            task: ModalRoute.of(context)!.settings.arguments as Task),
       },
     );
   }
