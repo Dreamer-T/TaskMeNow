@@ -11,7 +11,8 @@ class TaskCreateScreen extends StatefulWidget {
 }
 
 class _TaskCreateScreenState extends State<TaskCreateScreen> {
-  bool _isModified = false; // 用于检测是否有修改
+  bool _isDescriptionOrImageEdited = false; // 用于检测任务描述是否有修改
+  bool _isCheckboxChosen = false; // 用于检测任务描述是否有修改
   String _taskDescription = '';
   Image? _selectedImage;
   List<bool> _checkboxValues = [false, false, false, false]; // 4个多选框的值
@@ -25,7 +26,7 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
         onChanged: (bool? value) {
           setState(() {
             _checkboxValues[0] = value ?? false;
-            _isModified = true; // 多选框被修改
+            _isCheckboxChosen = true; // 多选框被修改
           });
         },
       ),
@@ -35,7 +36,7 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
         onChanged: (bool? value) {
           setState(() {
             _checkboxValues[1] = value ?? false;
-            _isModified = true;
+            _isCheckboxChosen = true;
           });
         },
       ),
@@ -45,7 +46,7 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
         onChanged: (bool? value) {
           setState(() {
             _checkboxValues[2] = value ?? false;
-            _isModified = true;
+            _isCheckboxChosen = true;
           });
         },
       ),
@@ -55,7 +56,7 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
         onChanged: (bool? value) {
           setState(() {
             _checkboxValues[3] = value ?? false;
-            _isModified = true;
+            _isCheckboxChosen = true;
           });
         },
       ),
@@ -92,7 +93,7 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            _onWillPop(); // 检测用户是否即将放弃修改
+            _onDiscard(); // 检测用户是否即将放弃修改
           },
         ),
       ),
@@ -107,7 +108,7 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
                 onChanged: (value) {
                   setState(() {
                     _taskDescription = value;
-                    _isModified = true; // 任务描述被修改
+                    _isDescriptionOrImageEdited = true; // 任务描述被修改
                   });
                 },
               ),
@@ -137,18 +138,21 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
                 children: [
                   ElevatedButton(
                     onPressed: () {
-                      _onWillPop(); // 放弃修改，检测是否有修改
+                      _onDiscard(); // 放弃修改，检测是否有修改
                     },
                     child: Text('Discard'),
                   ),
                   ElevatedButton(
                     onPressed: () {
                       // 保存任务逻辑
-                      setState(() {
-                        _isModified = false; // 保存后，修改标志重置
-                      });
-
-                      Navigator.pop(context, NewTask()); // 返回上一页面
+                      if (_isDescriptionOrImageEdited & _isCheckboxChosen) {
+                        _isDescriptionOrImageEdited = false;
+                        _isCheckboxChosen = false;
+                        Navigator.pop(context, NewTask()); // 返回上一页面
+                      } else {
+                        _onUnableSave();
+                        print("Her");
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepPurple,
@@ -184,7 +188,7 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
                   if (pickedFile != null) {
                     setState(() {
                       _selectedImage = Image.file(File(pickedFile.path));
-                      _isModified = true; // 图片被修改
+                      _isDescriptionOrImageEdited = true; // 图片被修改
                     });
                   }
                 },
@@ -200,7 +204,7 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
                   if (pickedFile != null) {
                     setState(() {
                       _selectedImage = Image.file(File(pickedFile.path));
-                      _isModified = true; // 图片被修改
+                      _isDescriptionOrImageEdited = true; // 图片被修改
                     });
                   }
                 },
@@ -213,36 +217,63 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
   }
 
   // 用户点击返回或放弃时的提示
-  void _onWillPop() {
-    if (_isModified) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Unsaved Changes'),
-            content: Text(
-                'You have unsaved changes. Do you really want to discard them?'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // 关闭对话框
-                },
-                child: Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // 关闭对话框
-                  Navigator.of(context).pop(); // 返回上一页面
-                },
-                child: Text('Discard'),
-              ),
-            ],
-          );
-        },
-      );
-    } else {
-      Navigator.of(context).pop(); // 没有修改时直接返回
-    }
+  void _onDiscard() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Unsaved Changes'),
+          content: Text(
+              'You have unsaved changes. Do you really want to discard them?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // 关闭对话框
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // 关闭对话框
+                Navigator.of(context).pop(); // 返回上一页面
+              },
+              child: Text('Discard'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// 没有达到保存标准：1. 有描述或者有图片 2.没有选择任务负责组
+  void _onUnableSave() {
+    print(_isDescriptionOrImageEdited);
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Unable to Save'),
+          content: !_isDescriptionOrImageEdited & !_isCheckboxChosen
+              ? Text(
+                  'Try to describe the situation or upload an image\nMust refer to a group to be responsible for the task.')
+              : _isDescriptionOrImageEdited & !_isCheckboxChosen
+                  ? Text(
+                      'Must refer to a group to be responsible for the task.')
+                  : !_isDescriptionOrImageEdited & _isCheckboxChosen
+                      ? Text(
+                          'Try to describe the situation or upload an image.')
+                      : null,
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // 关闭对话框
+              },
+              child: Text('Got it'),
+            )
+          ],
+        );
+      },
+    );
   }
 }
 
