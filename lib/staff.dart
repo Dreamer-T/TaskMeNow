@@ -8,7 +8,7 @@ int ID = 1;
 /// 定义成员类
 class Task {
   final int id;
-  final String description;
+  final String? description;
   final Image? image;
   final List<AuthorityGroup> groupAuthority;
   final DateTime time;
@@ -16,14 +16,14 @@ class Task {
   // 使用默认的图片
   Task({
     required this.id,
-    required this.description,
+    this.description,
     required this.groupAuthority,
     required this.time,
     this.image,
   });
   @override
   String toString() {
-    return "id: $id description: $description";
+    return "id: $id description: $description image: ${image!}";
   }
 }
 
@@ -51,6 +51,7 @@ class _StaffScreenState extends State<StaffScreen> {
     if (result != null) {
       setState(() {
         _taskResult = result;
+        print(result);
         _tasks.add(_taskResult);
       });
     }

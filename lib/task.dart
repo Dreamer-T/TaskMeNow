@@ -82,6 +82,7 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
         id: ID++,
         description: _taskDescription,
         groupAuthority: authorityGroup,
+        image: _selectedImage,
         time: DateTime.now());
   }
 
@@ -151,7 +152,7 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
                         Navigator.pop(context, NewTask()); // 返回上一页面
                       } else {
                         _onUnableSave();
-                        print("Her");
+                        // print("Here");
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -288,38 +289,125 @@ class TaskCheckScreen extends StatefulWidget {
 class _TaskCheckScreenState extends State<TaskCheckScreen> {
   @override
   Widget build(BuildContext context) {
-    final task = widget.task; // 假设 task 是 Task 类型
-
+    var task = widget.task;
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        titleTextStyle: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 22,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(56.0), // AppBar 的高度
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor, // AppBar 的背景色
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2), // 阴影颜色
+                blurRadius: 10, // 模糊半径
+                offset: Offset(0, 2), // 阴影偏移
+              ),
+            ],
+          ),
+          child: AppBar(
+            title: Text('#${task.id}'),
+            centerTitle: true,
+            elevation: 0, // 去掉默认的阴影
+          ),
         ),
-        title: Text("#${task.id}"),
-        centerTitle: true,
       ),
-      body: Column(children: [
-        Container(
-          alignment: Alignment.topLeft,
-          margin: EdgeInsets.all(15),
-          child: Text(
-            task.description,
-            style: TextStyle(fontSize: 20),
-          ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 任务时间
+            Text(
+              'Created on: ${task.time.toString().split('.')[0]}', // 显示日期部分
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            if (task.description != null) _buildDescription(task),
+            if (task.image != null) _buildImage(task),
+          ],
         ),
-        Container(
-          alignment: Alignment.topLeft,
-          margin: EdgeInsets.all(15),
-          child: Text(
-            task.time.toString(),
-            style: TextStyle(fontSize: 20),
-          ),
+      ),
+    );
+  }
+
+// 构建描述显示
+  Widget _buildDescription(Task task) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white, // 气泡背景颜色
+          borderRadius: BorderRadius.circular(16), // 圆角
+          // border: Border.all(color: Colors.blue), // 设置边框颜色
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              offset: Offset(2, 4),
+            ),
+          ],
         ),
-      ]),
+        child: TextFormField(
+          initialValue: task.description!, // 显示任务描述
+          enabled: false, // 禁止编辑
+          maxLines: null, // 自动换行显示长文本
+          decoration: InputDecoration(
+            labelText: 'Description', // 左上角的标签
+            labelStyle: TextStyle(
+              fontSize: 14,
+              color: Color(0xFF8A44BB), // 标签颜色
+            ),
+            filled: true, // 背景填充
+            fillColor: Colors.white24, // 设置填充颜色
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16), // 圆角边框
+              borderSide: BorderSide(
+                color: Color(0xFF8A44BB), // 边框颜色
+              ),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: Color(0xFF8A44BB), // 禁用状态下的边框颜色
+              ),
+            ),
+            contentPadding: EdgeInsets.all(12), // 内边距
+          ),
+          style: TextStyle(fontSize: 16, color: Colors.black87), // 文本样式
+        ),
+      ),
+    );
+  }
+
+  // 构建图片显示
+  Widget _buildImage(Task task) {
+    return Center(
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 8,
+              offset: Offset(2, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: task.image ??
+              Container(
+                color: Colors.grey[200], // 没有图片时显示的占位符颜色
+                child: Center(
+                  child: Text(
+                    'No Image Available', // 没有图片时显示的文本
+                    style: TextStyle(color: Colors.black54),
+                  ),
+                ),
+              ),
+        ),
+      ),
     );
   }
 }
