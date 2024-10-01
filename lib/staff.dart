@@ -128,18 +128,6 @@ class _StaffScreenState extends State<StaffScreen> {
     );
   }
 
-  // void _getPosition(int taskId) {
-  //   // 获取指定任务的 GlobalKey 并计算它的位置信息
-  //   final key = _itemKeys[taskId];
-  //   final renderBox = key?.currentContext?.findRenderObject() as RenderBox?;
-  //   print(renderBox);
-  //   if (renderBox != null) {
-  //     // 获取相对于屏幕的全局位置
-  //     final position = renderBox.localToGlobal(Offset.zero);
-  //     print('Position of task $taskId: $position');
-  //   }
-  // }
-
   PageRouteBuilder _createScaleTransitionPageRoute(Task task) {
     return PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) {

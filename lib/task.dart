@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:grouptodo/staff.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:intl/intl.dart';
 
 /// 任务创建界面
 class TaskCreateScreen extends StatefulWidget {
@@ -169,7 +171,6 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
     );
   }
 
-  // 选择图片的方法
   Future<void> _selectImage() async {
     showDialog(
       context: context,
@@ -187,10 +188,13 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
                     source: ImageSource.gallery,
                   );
                   if (pickedFile != null) {
-                    setState(() {
-                      _selectedImage = Image.file(File(pickedFile.path));
-                      _isDescriptionOrImageEdited = true; // 图片被修改
-                    });
+                    File? croppedFile = await _cropImage(pickedFile.path);
+                    if (croppedFile != null) {
+                      setState(() {
+                        _selectedImage = Image.file(croppedFile);
+                        _isDescriptionOrImageEdited = true; // 图片被修改
+                      });
+                    }
                   }
                 },
               ),
@@ -203,10 +207,13 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
                     source: ImageSource.camera,
                   );
                   if (pickedFile != null) {
-                    setState(() {
-                      _selectedImage = Image.file(File(pickedFile.path));
-                      _isDescriptionOrImageEdited = true; // 图片被修改
-                    });
+                    File? croppedFile = await _cropImage(pickedFile.path);
+                    if (croppedFile != null) {
+                      setState(() {
+                        _selectedImage = Image.file(croppedFile);
+                        _isDescriptionOrImageEdited = true; // 图片被修改
+                      });
+                    }
                   }
                 },
               ),
@@ -215,6 +222,43 @@ class _TaskCreateScreenState extends State<TaskCreateScreen> {
         );
       },
     );
+  }
+
+// 裁剪图片的方法
+  Future<File?> _cropImage(String imagePath) async {
+    CroppedFile? croppedFile = await ImageCropper()
+        .cropImage(sourcePath: imagePath, aspectRatioPresets: [
+      CropAspectRatioPreset.square,
+      CropAspectRatioPreset.ratio4x3,
+      CropAspectRatioPreset.ratio16x9,
+    ], uiSettings: [
+      AndroidUiSettings(
+        // toolbarTitle: 'Crop Image',
+        toolbarColor: const Color(0xFF8A44BB),
+        statusBarColor: const Color(0xFF8A44BB),
+        toolbarWidgetColor: Colors.white,
+        // backgroundColor: Colors.black,
+        activeControlsWidgetColor: const Color(0xFF8A44BB),
+        dimmedLayerColor: Colors.black.withOpacity(0.5),
+        cropFrameColor: Colors.white,
+        cropGridColor: Colors.grey,
+        cropFrameStrokeWidth: 3,
+        cropGridRowCount: 2,
+        cropGridColumnCount: 2,
+        cropGridStrokeWidth: 1,
+        showCropGrid: true,
+        lockAspectRatio: false,
+        hideBottomControls: false,
+        initAspectRatio: CropAspectRatioPreset.square,
+      )
+    ]);
+
+    if (croppedFile != null) {
+      return File(croppedFile.path);
+    } else {
+      print("裁剪失败");
+      return null;
+    }
   }
 
   // 用户点击返回或放弃时的提示
@@ -290,6 +334,7 @@ class _TaskCheckScreenState extends State<TaskCheckScreen> {
   @override
   Widget build(BuildContext context) {
     var task = widget.task;
+    DateFormat formatter = DateFormat('yyyy-MM-dd HH:mm:ss');
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(56.0), // AppBar 的高度
@@ -318,12 +363,36 @@ class _TaskCheckScreenState extends State<TaskCheckScreen> {
           children: [
             // 任务时间
             Text(
-              'Created on: ${task.time.toString().split('.')[0]}', // 显示日期部分
+              'Created on: ${formatter.format(task.time)}', // 显示日期部分
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
-            if (task.description != null) _buildDescription(task),
+            if (task.description != "") _buildDescription(task),
+            SizedBox(height: 8),
             if (task.image != null) _buildImage(task),
+            SizedBox(height: 8),
+            Container(
+              width: double.infinity, // 按钮宽度占满整行
+              decoration: BoxDecoration(
+                color: Colors.deepPurple, // 按钮底色
+                borderRadius: BorderRadius.circular(30.0), // 可选：设置圆角
+              ),
+              child: TextButton(
+                onPressed: () {
+                  // 这里需要删掉这个task并转移到complete task中
+                  print("Finish");
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  'Finish',
+                  style: TextStyle(
+                    color: Colors.white, // 按钮文字颜色
+                    fontSize: 16, // 文字大小
+                    fontWeight: FontWeight.bold, // 文字加粗
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
