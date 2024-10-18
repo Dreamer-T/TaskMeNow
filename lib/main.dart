@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'admin.dart';
 import 'staff.dart';
 import 'task.dart';
+import 'dart:convert';
+import 'register.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(GroupToDo());
@@ -19,6 +22,7 @@ class GroupToDo extends StatelessWidget {
       routes: {
         '/home': (BuildContext context) => LoginScreen(),
         '/home/admin': (BuildContext context) => AdminScreen(),
+        '/home/register/user': (BuildContext context) => UserRegisterScreen(),
         '/home/staff': (BuildContext context) => StaffScreen(),
         '/home/staff/taskCreate': (BuildContext context) => TaskCreateScreen(),
         '/home/staff/taskCheck': (BuildContext context) => TaskCheckScreen(
@@ -39,29 +43,63 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscureText = true;
 
-  void _login() {
+  void _login() async {
     final username = _usernameController.text;
     final password = _passwordController.text;
 
-    // Perform login logic here
-    print('Username: $username');
-    print('Password: $password');
-    if (username == "Admin") {
-      Navigator.pushNamed(context, "/home/admin");
-    } else if (username == "staff") {
-      Navigator.pushNamed(context, "/home/staff");
+    // API URL for login authentication
+    final url = Uri.parse(
+        'https://taskmenow-backend-678769546650.us-central1.run.app/login_user');
+
+    // Prepare the request payload
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': username,
+        'password': password,
+      }),
+    );
+
+    // print("看这里" + response.body);
+    if (!mounted) {
+      return; // Ensure widget is still mounted before accessing context
+    }
+
+    // Check the API response
+    if (response.statusCode == 200) {
+      final result = jsonDecode(response.body);
+
+      if (result['status'] == 'success') {
+        Navigator.pushNamed(context, "/home/staff");
+      } else {
+        // If authentication failed
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Login Failed'),
+                content: Text(result['message'] ?? 'Invalid credentials.'),
+              );
+            });
+        _usernameController.clear();
+        _passwordController.clear();
+      }
     } else {
+      // Handle server or API errors
       showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text('Not a member'),
-              content: Text('The entered username is not recognized.'),
+              title: Text('Error'),
+              content: Text('Server error, please try again later.'),
             );
           });
-      _usernameController.text = "";
-      _passwordController.text = "";
     }
+  }
+
+  void _register() {
+    Navigator.pushNamed(context, "/home/register/user");
   }
 
   @override
@@ -79,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
               TextField(
                 controller: _usernameController,
                 decoration: InputDecoration(
-                  hintText: 'Username',
+                  hintText: 'Email',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -106,6 +144,15 @@ class _LoginScreenState extends State<LoginScreen> {
               ElevatedButton(
                 onPressed: _login,
                 child: Text('Login'),
+              ),
+              TextButton(
+                onPressed: _register,
+                child: Text(
+                  'Register',
+                  style: TextStyle(
+                    decoration: TextDecoration.underline, // 添加下划线
+                  ),
+                ),
               ),
             ],
           ),
