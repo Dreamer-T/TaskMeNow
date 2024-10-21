@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'admin.dart';
+import 'manager.dart';
+import 'supervisor.dart';
 import 'staff.dart';
 import 'task.dart';
 import 'dart:convert';
@@ -21,8 +22,9 @@ class GroupToDo extends StatelessWidget {
       initialRoute: '/home',
       routes: {
         '/home': (BuildContext context) => LoginScreen(),
-        '/home/admin': (BuildContext context) => AdminScreen(),
+        '/home/manager': (BuildContext context) => ManagerScreen(),
         '/home/register/user': (BuildContext context) => UserRegisterScreen(),
+        '/home/supervisor': (BuildContext context) => SupervisorScreen(),
         '/home/staff': (BuildContext context) => StaffScreen(),
         '/home/staff/taskCreate': (BuildContext context) => TaskCreateScreen(),
         '/home/staff/taskCheck': (BuildContext context) => TaskCheckScreen(
@@ -49,7 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // API URL for login authentication
     final url = Uri.parse(
-        'https://taskmenow-backend-678769546650.us-central1.run.app/login_user');
+        'https://taskmenow-backend-678769546650.us-central1.run.app/login');
 
     // Prepare the request payload
     final response = await http.post(
@@ -69,21 +71,13 @@ class _LoginScreenState extends State<LoginScreen> {
     // Check the API response
     if (response.statusCode == 200) {
       final result = jsonDecode(response.body);
-
-      if (result['status'] == 'success') {
+      print(result['user']['role']);
+      if (result['user']['role'] == 'Manager') {
+        Navigator.pushNamed(context, "/home/manager");
+      } else if (result['user']['role'] == 'Supervisor') {
+        Navigator.pushNamed(context, "/home/supervisor");
+      } else if (result['user']['role'] == 'Staff') {
         Navigator.pushNamed(context, "/home/staff");
-      } else {
-        // If authentication failed
-        showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text('Login Failed'),
-                content: Text(result['message'] ?? 'Invalid credentials.'),
-              );
-            });
-        _usernameController.clear();
-        _passwordController.clear();
       }
     } else {
       // Handle server or API errors
@@ -92,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text('Error'),
-              content: Text('Server error, please try again later.'),
+              content: Text('Login Failed.'),
             );
           });
     }
@@ -144,15 +138,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ElevatedButton(
                 onPressed: _login,
                 child: Text('Login'),
-              ),
-              TextButton(
-                onPressed: _register,
-                child: Text(
-                  'Register',
-                  style: TextStyle(
-                    decoration: TextDecoration.underline, // 添加下划线
-                  ),
-                ),
               ),
             ],
           ),

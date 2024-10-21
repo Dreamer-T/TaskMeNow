@@ -11,46 +11,60 @@ class _UserRegisterScreenState extends State<UserRegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
 
   // For company selection
-  String? _selectedCompany;
-  List<Map<String, dynamic>> _companies = [];
+  String _role = "Staff";
 
   @override
   void initState() {
     super.initState();
-    _fetchCompanies();
-  }
-
-  Future<void> _fetchCompanies() async {
-    final response = await http.get(Uri.parse(
-        'https://taskmenow-backend-678769546650.us-central1.run.app/search_company')); // 替换为你的 API URL
-
-    if (response.statusCode == 200) {
-      // 解析 JSON 数据
-      List<dynamic> data = json.decode(response.body);
-
-      // 将 JSON 转换为 List<Map<String, dynamic>>
-      setState(() {
-        _companies = List<Map<String, dynamic>>.from(data.map((company) => {
-              'companyname': company['companyname'],
-              'logo': company['logo'],
-              'uniqueName': company['uniqueName']
-              // 添加其他字段
-            }));
-      });
-    } else {
-      throw Exception('Failed to load companies');
-    }
   }
 
   // Function to handle registration
-  void _register() {
+  Future<void> _registerUser() async {
     if (_formKey.currentState!.validate()) {
       // Handle registration logic here
       // You can send the email, username, password, and selected company data to your backend
       print("need to add backend api here");
+      final String email = _emailController.text;
+      final String username = _usernameController.text;
+      const String password = "12345678";
+      final String role = _role; // 可选的公司字段
+
+      // 构建 API 请求
+      const String apiUrl =
+          'https://taskmenow-backend-678769546650.us-central1.run.app/register_user'; // 替换为您的后端 API 地址
+      final Map<String, dynamic> data = {
+        'email': email,
+        'userName': username,
+        'password': password,
+        'userRole': role,
+      };
+      try {
+        // 发送 POST 请求
+        final response = await http.post(
+          Uri.parse(apiUrl),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(data),
+        );
+
+        // 检查响应状态码
+        if (response.statusCode == 201) {
+          // 注册成功，处理响应数据
+          final responseBody = jsonDecode(response.body);
+          print('Registration successful: ${responseBody['message']}');
+          // 在此处处理成功的逻辑（比如导航到登录页面或显示提示）
+        } else {
+          // 注册失败，处理错误
+          final errorBody = jsonDecode(response.body);
+          print('Registration failed: ${errorBody['error']}');
+          // 在此处处理失败的逻辑（比如显示错误提示）
+        }
+      } catch (error) {
+        // 捕获网络或其他错误
+        print('Error during registration: $error');
+        // 在此处处理错误
+      }
     }
   }
 
@@ -98,50 +112,21 @@ class _UserRegisterScreenState extends State<UserRegisterScreen> {
               ),
               SizedBox(height: 16.0),
 
-              // Password field
-              TextFormField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  hintText: 'Password',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your password';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16.0),
-
               DropdownButtonFormField<String>(
-                value: _selectedCompany,
+                value: _role,
                 decoration: InputDecoration(
-                  hintText: 'Select Company (Optional)',
+                  hintText: 'Select Role',
                   border: OutlineInputBorder(),
                 ),
-                items: _companies.map((company) {
+                items: ['Manager', 'Supervisor', 'Staff'].map((role) {
                   return DropdownMenuItem<String>(
-                    value: company['uniqueName'], // 使用公司名称作为值
-                    child: Row(
-                      children: [
-                        Image.network(
-                          company['logo'], // 使用网络图片
-                          width: 24,
-                          height: 24,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Icon(Icons.error), // 图片加载失败处理
-                        ),
-                        SizedBox(width: 8.0),
-                        Text(company['companyname']), // 显示公司名称
-                      ],
-                    ),
+                    value: role,
+                    child: Text(role), // 显示角色名称
                   );
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
-                    _selectedCompany = value;
+                    _role = value!; // 更新选中的角色
                   });
                 },
               ),
@@ -150,7 +135,7 @@ class _UserRegisterScreenState extends State<UserRegisterScreen> {
 
               // Register button
               ElevatedButton(
-                onPressed: _register,
+                onPressed: _registerUser,
                 child: Text('Register'),
               ),
             ],

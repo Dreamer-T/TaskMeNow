@@ -27,7 +27,6 @@ class Task {
   }
 }
 
-/// Admin Screen which allows admin to modify group members
 class StaffScreen extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _StaffScreenState();

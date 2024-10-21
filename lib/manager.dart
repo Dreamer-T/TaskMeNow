@@ -9,13 +9,13 @@ class Member {
   Member({required this.id, required this.name, this.role = 'staff'});
 }
 
-/// Admin Screen which allows admin to modify group members
-class AdminScreen extends StatefulWidget {
+/// Manager Screen which allows manager to modify group members
+class ManagerScreen extends StatefulWidget {
   @override
-  State<StatefulWidget> createState() => _AdminScreenState();
+  State<StatefulWidget> createState() => _ManagerScreenState();
 }
 
-class _AdminScreenState extends State<AdminScreen> {
+class _ManagerScreenState extends State<ManagerScreen> {
   // 当前选中的页面索引
   int _currentIndex = 0;
 
@@ -111,7 +111,7 @@ class _AdminScreenState extends State<AdminScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Admin Screen'),
+        title: Text('Manager Screen'),
         backgroundColor: Colors.deepPurple,
         elevation: 0,
         titleTextStyle: TextStyle(
