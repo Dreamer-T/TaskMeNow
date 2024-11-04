@@ -6,7 +6,7 @@ class Member {
   final String name;
   final String role;
 
-  Member({required this.id, required this.name, this.role = 'staff'});
+  Member({required this.id, required this.name, this.role = 'Staff'});
 }
 
 /// Manager Screen which allows manager to modify group members
@@ -109,15 +109,41 @@ class _ManagerScreenState extends State<ManagerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Map<String, dynamic> _arguments =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final String avatarUrl = _arguments['avatar']; // 替换为实际的头像URL
+    final String name = _arguments['userName'];
+    final String email = _arguments['email'];
+    // final String group = arguments['ID'];
+    final String role = _arguments['role'];
+    // final DateTime createdAt = arguments['createdTime']; // 用户创建时间
+    print("头像地址为" + _arguments['avatar']);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Manager Screen'),
+        title: Column(
+          children: [
+            GestureDetector(
+              onTap: () {
+                // 在这里处理头像点击事件
+                // 比如导航到用户个人信息页面
+                Navigator.pushNamed(
+                  context,
+                  "/profile",
+                  arguments: _arguments,
+                );
+              },
+              child: CircleAvatar(
+                radius: 20, // 调整头像大小
+                backgroundImage:
+                    NetworkImage(avatarUrl), // 替换为用户头像的URL或AssetImage
+              ),
+            ),
+          ],
+        ),
+        centerTitle: true, // 标题居中
         backgroundColor: Colors.deepPurple,
         elevation: 0,
-        titleTextStyle: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 22,
-        ),
+        automaticallyImplyLeading: false,
       ),
       body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(

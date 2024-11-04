@@ -5,6 +5,7 @@ import 'staff.dart';
 import 'task.dart';
 import 'dart:convert';
 import 'register.dart';
+import 'profile.dart';
 import 'package:http/http.dart' as http;
 
 void main() {
@@ -29,6 +30,7 @@ class GroupToDo extends StatelessWidget {
         '/home/staff/taskCreate': (BuildContext context) => TaskCreateScreen(),
         '/home/staff/taskCheck': (BuildContext context) => TaskCheckScreen(
             task: ModalRoute.of(context)!.settings.arguments as Task),
+        '/profile': (BuildContext context) => ProfileScreen(),
       },
     );
   }
@@ -41,59 +43,101 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscureText = true;
 
   void _login() async {
-    final username = _usernameController.text;
+    final email = _emailController.text;
     final password = _passwordController.text;
 
     // API URL for login authentication
     final url = Uri.parse(
         'https://taskmenow-backend-678769546650.us-central1.run.app/login');
 
-    // Prepare the request payload
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': username,
-        'password': password,
-      }),
+    // 显示加载对话框
+    showDialog(
+      context: context,
+      barrierDismissible: false, // 禁止用户点击对话框外部关闭
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20), // 调整指示器与文本之间的间距
+              Text("Logging in..."), // 显示加载文本
+            ],
+          ),
+        );
+      },
     );
 
-    // print("看这里" + response.body);
-    if (!mounted) {
-      return; // Ensure widget is still mounted before accessing context
-    }
+    try {
+      // Prepare the request payload
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
 
-    // Check the API response
-    if (response.statusCode == 200) {
-      final result = jsonDecode(response.body);
-      print(result['user']['role']);
-      if (result['user']['role'] == 'Manager') {
-        Navigator.pushNamed(context, "/home/manager");
-      } else if (result['user']['role'] == 'Supervisor') {
-        Navigator.pushNamed(context, "/home/supervisor");
-      } else if (result['user']['role'] == 'Staff') {
-        Navigator.pushNamed(context, "/home/staff");
+      print("看这里" + response.body);
+      if (!mounted) {
+        return; // Ensure widget is still mounted before accessing context
       }
-    } else {
-      // Handle server or API errors
+
+      // 关闭加载对话框
+      Navigator.of(context).pop();
+
+      // Check the API response
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        print(result['user']['role']);
+        if (result['user']['role'] == 'Manager') {
+          Navigator.pushNamed(
+            context,
+            "/home/manager",
+            arguments: result['user'],
+          );
+        } else if (result['user']['role'] == 'Supervisor') {
+          Navigator.pushNamed(
+            context,
+            "/home/supervisor",
+            arguments: result['user'],
+          );
+        } else if (result['user']['role'] == 'Staff') {
+          Navigator.pushNamed(
+            context,
+            "/home/staff",
+            arguments: result['user'],
+          );
+        }
+      } else {
+        // Handle server or API errors
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Error'),
+                content: Text('Login Failed.'),
+              );
+            });
+      }
+    } catch (e) {
+      // 关闭加载对话框
+      Navigator.of(context).pop();
+      // Handle any exceptions
       showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text('Error'),
-              content: Text('Login Failed.'),
+              content: Text('An error occurred. Please try again.'),
             );
           });
     }
-  }
-
-  void _register() {
-    Navigator.pushNamed(context, "/home/register/user");
   }
 
   @override
@@ -109,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               TextField(
-                controller: _usernameController,
+                controller: _emailController,
                 decoration: InputDecoration(
                   hintText: 'Email',
                   border: OutlineInputBorder(),
