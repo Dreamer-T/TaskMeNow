@@ -1,5 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:image_cropper/image_cropper.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -14,6 +21,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late String group = '所属Group';
   late String role = '用户角色';
   late DateTime createdAt = DateTime.now(); // 用户创建时间
+
+  // 选择图片
+  File? _image;
+
+  // 使用 ImagePicker 选择本地图片
+  final ImagePicker _picker = ImagePicker();
   @override
   Widget build(BuildContext context) {
     final Map<String, dynamic> arguments =
@@ -21,9 +34,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     avatarUrl = arguments['avatar'];
     name = arguments['userName'];
     email = arguments['email'];
-    // group = arguments['avatar'];
     role = arguments['role'];
-    print("object:" + avatarUrl);
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Profile Screen'),
@@ -40,17 +52,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Padding(padding: EdgeInsets.all(10)),
           // 可缩放的用户头像
-          CircleAvatar(
-            radius: 60, // 基础头像大小
-            backgroundImage: NetworkImage(avatarUrl), // 替换为实际的头像URL
+          GestureDetector(
+            onTap: () => {_pickImage(arguments)}, // 点击头像时选择图片
+            child: CircleAvatar(
+              radius: 60, // 基础头像大小
+              backgroundImage: _image != null
+                  ? FileImage(_image!)
+                      as ImageProvider<Object>? // 强制转换为 ImageProvider<Object>
+                  : NetworkImage(avatarUrl)
+                      as ImageProvider<Object>?, // 否则显示默认头像
+            ),
           ),
           Center(
             child: SingleChildScrollView(
-              // 允许内容滚动
               child: Column(
                 children: [
                   SizedBox(height: 20), // 添加间距
-
                   // 用户信息
                   Text(
                     name,
@@ -91,6 +108,154 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _pickImage(Map<String, dynamic> arguments) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.photo_library),
+                title: Text('Select from album'),
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  final XFile? pickedFile = await _picker.pickImage(
+                    source: ImageSource.gallery,
+                  );
+                  if (pickedFile != null) {
+                    File? croppedFile = await _cropImage(pickedFile.path);
+                    if (croppedFile != null) {
+                      setState(() {
+                        _image = croppedFile;
+                      });
+                      await _uploadImageToServer(_image!, arguments);
+                    }
+                  }
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.camera_alt),
+                title: Text('Take a photo now'),
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  final XFile? pickedFile = await _picker.pickImage(
+                    source: ImageSource.camera,
+                  );
+                  if (pickedFile != null) {
+                    File? croppedFile = await _cropImage(pickedFile.path);
+                    if (croppedFile != null) {
+                      setState(() {
+                        _image = croppedFile;
+                      });
+                      await _uploadImageToServer(_image!, arguments);
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    // // 弹出选择相册或相机的选项
+    // final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+
+    // if (pickedFile != null) {
+    //   setState(() {
+    //     _image = File(pickedFile.path); // 设置选中的图片
+    //   });
+    // }
+    // Close the loading dialog if the widget is still mounted
+    // if (mounted) {
+    //   Navigator.of(context).pop();
+    // }
+  }
+
+// 裁剪图片的方法
+  Future<File?> _cropImage(String imagePath) async {
+    CroppedFile? croppedFile = await ImageCropper()
+        .cropImage(sourcePath: imagePath, aspectRatioPresets: [
+      CropAspectRatioPreset.square,
+      CropAspectRatioPreset.ratio4x3,
+      CropAspectRatioPreset.ratio16x9,
+    ], uiSettings: [
+      AndroidUiSettings(
+        // toolbarTitle: 'Crop Image',
+        toolbarColor: const Color(0xFF8A44BB),
+        statusBarColor: const Color(0xFF8A44BB),
+        toolbarWidgetColor: Colors.white,
+        // backgroundColor: Colors.black,
+        activeControlsWidgetColor: const Color(0xFF8A44BB),
+        dimmedLayerColor: Colors.black.withOpacity(0.5),
+        cropFrameColor: Colors.white,
+        cropGridColor: Colors.grey,
+        cropFrameStrokeWidth: 3,
+        cropGridRowCount: 2,
+        cropGridColumnCount: 2,
+        cropGridStrokeWidth: 1,
+        showCropGrid: true,
+        lockAspectRatio: false,
+        hideBottomControls: false,
+        initAspectRatio: CropAspectRatioPreset.square,
+      )
+    ]);
+
+    if (croppedFile != null) {
+      return File(croppedFile.path);
+    } else {
+      print("裁剪失败");
+      return null;
+    }
+  }
+
+  Future<void> _uploadImageToServer(
+      File imageFile, Map<String, dynamic> arguments) async {
+    final Uri uploadUrl = Uri.parse(
+        'https://taskmenow-backend-678769546650.us-central1.run.app/images/uploadAvatar');
+
+    // Create a multipart request to send the file to the server
+    var request = http.MultipartRequest('POST', uploadUrl);
+    // Add the Authorization header with the token
+    request.headers['Authorization'] =
+        'Bearer ' + arguments['token']; // Add token to the header
+
+    // Attach the image to the request as a 'file' field
+    request.files.add(await http.MultipartFile.fromPath(
+      'Avatar', // The field name expected by the server (from your API code)
+      imageFile.path,
+      contentType: MediaType('image',
+          'jpeg'), // Adjust the contentType based on the file format (e.g., 'image/png' for PNG)
+    ));
+
+    // Send the request
+    try {
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        // Capture the response body
+        final responseBody = await response.stream.bytesToString();
+
+        // Decode the response JSON
+        final Map<String, dynamic> responseJson = jsonDecode(responseBody);
+
+        // Check if 'message' field exists in the response
+        if (responseJson.containsKey('message')) {
+          final String message = responseJson['message'];
+          print(
+              'Server Message: $message'); // Print the message from the server
+        } else {
+          print('No message field in response.');
+        }
+      } else {
+        print('Failed to upload image. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error uploading image: $e');
+    }
   }
 
   void _logout() async {
