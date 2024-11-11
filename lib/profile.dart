@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:path_provider/path_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -161,22 +162,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       },
     );
-    // // 弹出选择相册或相机的选项
-    // final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-
-    // if (pickedFile != null) {
-    //   setState(() {
-    //     _image = File(pickedFile.path); // 设置选中的图片
-    //   });
-    // }
-    // Close the loading dialog if the widget is still mounted
-    // if (mounted) {
-    //   Navigator.of(context).pop();
-    // }
   }
 
-// 裁剪图片的方法
   Future<File?> _cropImage(String imagePath) async {
+    // 使用 ImageCropper 裁剪图片
     CroppedFile? croppedFile = await ImageCropper()
         .cropImage(sourcePath: imagePath, aspectRatioPresets: [
       CropAspectRatioPreset.square,
@@ -184,11 +173,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       CropAspectRatioPreset.ratio16x9,
     ], uiSettings: [
       AndroidUiSettings(
-        // toolbarTitle: 'Crop Image',
         toolbarColor: const Color(0xFF8A44BB),
         statusBarColor: const Color(0xFF8A44BB),
         toolbarWidgetColor: Colors.white,
-        // backgroundColor: Colors.black,
         activeControlsWidgetColor: const Color(0xFF8A44BB),
         dimmedLayerColor: Colors.black.withOpacity(0.5),
         cropFrameColor: Colors.white,
@@ -205,7 +192,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ]);
 
     if (croppedFile != null) {
-      return File(croppedFile.path);
+      // 获取应用的文档目录路径
+      final directory = await getApplicationDocumentsDirectory();
+      String fileName =
+          'cropped_image_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final localPath = '${directory.path}/$fileName';
+
+      // 将裁剪后的图片保存到本地
+      File croppedImage = File(croppedFile.path);
+      File localImage = await croppedImage.copy(localPath);
+
+      print("裁剪后的图片保存到本地: $localPath");
+
+      return localImage;
     } else {
       print("裁剪失败");
       return null;
