@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -7,18 +8,21 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   // 示例用户数据
-  String avatarUrl =
-      'https://storage.googleapis.com/tmn_company_logo_images/%E7%99%BD%E9%87%912.jpg'; // 替换为实际的头像URL
-  final String name = '用户姓名';
-  final String email = '用户邮箱';
-  final String group = '所属Group';
-  final String role = '用户角色';
-  final DateTime createdAt = DateTime.now(); // 用户创建时间
+  late String avatarUrl;
+  late String name = '用户姓名';
+  late String email = '用户邮箱';
+  late String group = '所属Group';
+  late String role = '用户角色';
+  late DateTime createdAt = DateTime.now(); // 用户创建时间
   @override
   Widget build(BuildContext context) {
     final Map<String, dynamic> arguments =
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     avatarUrl = arguments['avatar'];
+    name = arguments['userName'];
+    email = arguments['email'];
+    // group = arguments['avatar'];
+    role = arguments['role'];
     print("object:" + avatarUrl);
     return Scaffold(
       appBar: AppBar(
@@ -73,6 +77,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                     child: Text('Change Password'),
                   ),
+                  ElevatedButton(
+                    onPressed: () {
+                      // 退出登陆
+                      _logout();
+                    },
+                    child: Text('Log out'),
+                  ),
                 ],
               ),
             ),
@@ -80,6 +91,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
+  }
+
+  void _logout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // 清除所有本地存储的数据
+    Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
   }
 
   void _showChangePasswordDialog(BuildContext context) {

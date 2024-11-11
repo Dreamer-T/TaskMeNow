@@ -117,7 +117,14 @@ class _ManagerScreenState extends State<ManagerScreen> {
     // final String group = arguments['ID'];
     final String role = _arguments['role'];
     // final DateTime createdAt = arguments['createdTime']; // 用户创建时间
-    print("头像地址为" + _arguments['avatar']);
+    print("头像地址为" +
+        _arguments['avatar'] +
+        ";名字是：" +
+        name +
+        ";邮箱是：" +
+        email +
+        ";角色是：" +
+        role);
     return Scaffold(
       appBar: AppBar(
         title: Column(

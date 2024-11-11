@@ -8,7 +8,6 @@ class SupervisorScreen extends StatefulWidget {
 class _SupervisorScreenState extends State<SupervisorScreen> {
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Scaffold(
       appBar: AppBar(
         title: Text('Supervisor Screen'),
